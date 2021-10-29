@@ -1,6 +1,10 @@
 package com.example.demo.config;
 
 import com.example.demo.common.JwtProperties;
+import com.example.demo.config.oauth.CustomOAuth2SuccessHandler;
+import com.example.demo.config.oauth.CustomOAuth2UserService;
+import com.example.demo.config.oauth.OAuth2UserAttribute;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,13 +15,16 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.access.AccessDeniedHandler;
 
 @RequiredArgsConstructor
 @Configuration
 @EnableWebSecurity(debug = false)
-public class SecurityJwtConfig extends WebSecurityConfigurerAdapter {
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     public static final String TARGET_URL = "/index.html";
     public static final String ERROR_URL = "/denied";
@@ -25,10 +32,11 @@ public class SecurityJwtConfig extends WebSecurityConfigurerAdapter {
     private final TokenHelper tokenHelper;
     private final UserDetailsServiceImp userDetailsService;
     private final JwtProperties jwtProperties;
+    private final ObjectMapper objectMapper;
 
     @Bean
-    public TokenSuccessHandler tokenSuccessHandler() {
-        return new TokenSuccessHandler(tokenHelper, TARGET_URL, jwtProperties);
+    public CustomOAuth2SuccessHandler customOAuth2SuccessHandler() {
+        return new CustomOAuth2SuccessHandler(tokenHelper, TARGET_URL, jwtProperties);
     }
 
     @Bean
@@ -38,7 +46,7 @@ public class SecurityJwtConfig extends WebSecurityConfigurerAdapter {
 
     @Bean
     public TokenAuthenticationFilter jwtAuthenticationFilter() {
-        return new TokenAuthenticationFilter(tokenHelper, userDetailsService, jwtProperties);
+        return new TokenAuthenticationFilter(tokenHelper, jwtProperties);
     }
 
     @Bean
@@ -51,6 +59,11 @@ public class SecurityJwtConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+    }
+
+    @Bean
+    public OAuth2UserService<OAuth2UserRequest, OAuth2User> customOAuth2UserService() {
+        return new CustomOAuth2UserService(new OAuth2UserAttribute(objectMapper));
     }
 
     // 스프링 시큐리티를 무시하게 하는 URL 규칙
@@ -72,24 +85,35 @@ public class SecurityJwtConfig extends WebSecurityConfigurerAdapter {
 
                 .and()
                 .authorizeRequests()
-                .antMatchers("/index.html").permitAll()
-                .antMatchers("/logout.html").permitAll()
-                .antMatchers("/denied").permitAll()
-                .antMatchers("/admin/**").hasAnyRole("ADMIN")
-                .antMatchers("/user/**").authenticated()
-                .anyRequest().authenticated()
-
-                .and()
-                .formLogin()
-                .successHandler(tokenSuccessHandler())
+                    .antMatchers("/index.html").permitAll()
+                    .antMatchers("/logout.html").permitAll()
+                    .antMatchers("/oauth2Login.html").permitAll()
+                    .antMatchers("/denied").permitAll()
+                    .antMatchers("/admin/**").hasAnyRole("ADMIN")
+                    .antMatchers("/user/**").authenticated()
+                    .anyRequest().authenticated()
 
                 .and()
                 .exceptionHandling()
-                .accessDeniedHandler(accessDeniedHandler())
+                    .accessDeniedHandler(accessDeniedHandler())
+
+                .and()
+                .oauth2Login() // oauth2 로그인 관련 처리 설정
+                    .loginPage("/oauth2Login.html")
+                    .redirectionEndpoint()
+                    .baseUri("/oauth2/callback/*")
+                    .and()
+                    .userInfoEndpoint().userService(customOAuth2UserService()) // oauth2 인증 과정에서 authentication 생성에 필요한 OAuth2User 를 반환한다.
+                    .and()
+                    .successHandler(customOAuth2SuccessHandler()) // 인증 성공
 
                 .and()
                 .logout()
-                .deleteCookies(jwtProperties.getCookieName())
-                .logoutSuccessUrl("/logout.html");
+                    .logoutUrl("/logout")
+                    .deleteCookies(jwtProperties.getCookieName())
+                    .logoutSuccessUrl("/logout.html")
+
+                .and()
+                .csrf().disable();
     }
 }

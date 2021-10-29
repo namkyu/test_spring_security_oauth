@@ -11,10 +11,37 @@ spring:
     showSql: true
     generate-ddl: true
 
+  security:
+    oauth2:
+      client:
+        registration:
+#          google:
+#            client-id: # 발급 받은 client-id #
+#            client-secret: # 발급 받은 client-secret #
+#            scope: # 필요한 권한 #
+          kakao:
+            client-id: # 발급 받은 client-id #
+            client-secret: # 발급 받은 client-secret #
+            scope:
+              - profile_nickname
+              - account_email
+              - gender
+            redirect-uri: "http://localhost:8080/oauth2/callback/kakao"
+            authorization-grant-type: authorization_code
+            client-name: kakao
+            client-authentication-method: POST
+
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
 app:
   name: spring_oauth2
 
 jwt:
-  cookie_name: SPRING_JWT
+  cookie_name: oauth_test
   expires_in: 30 # 30 day
   secret: test1234

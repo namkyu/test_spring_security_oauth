@@ -2,12 +2,16 @@
 <html>
 <head>
     <title>Home</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 </head>
 <body>
 <div>
+    <form name="logoutForm" action="/logout" method="post">
+        <input hidden type="submit" value="Logout"/>
+    </form>
+    Login 되었습니다.
     <div>
-        <a href="/logout">Log Out</a>
+        <a href="javascript: document.logoutForm.submit()">Logout Link</a>
     </div>
     <div>
         <a href="#" onclick="moveAdminPage()">Admin 페이지 호출 테스트</a>

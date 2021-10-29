@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 
 @Slf4j
@@ -32,12 +34,21 @@ public class TokenHelper {
         return username;
     }
 
-    public String generateToken(String username) {
+    public Claims getClaims(String token) {
+        Claims claims = getClaimsFromToken(token, secret);
+        return claims;
+    }
+
+    public String generateToken(String username, String[] authorities) {
+        Map<String, Object> claim = new HashMap<>();
+        claim.put("iss", appName);
+        claim.put("sub", username);
+        claim.put("role", authorities);
+        claim.put("exp", generateExpirationDate());
+        claim.put("iat", generateCurrentDate());
+
         return Jwts.builder()
-                .setIssuer(appName)
-                .setSubject(username)
-                .setIssuedAt(generateCurrentDate())
-                .setExpiration(generateExpirationDate())
+                .setClaims(claim)
                 .signWith(SIGNATURE_ALGORITHM, secret)
                 .compact();
     }
