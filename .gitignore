@@ -4,6 +4,7 @@ target/
 !**/src/main/**
 !**/src/test/**
 .mvn
+application-local.yml
 
 ### STS ###
 .apt_generated
