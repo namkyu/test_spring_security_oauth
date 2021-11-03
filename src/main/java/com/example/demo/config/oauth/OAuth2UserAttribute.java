@@ -2,6 +2,8 @@ package com.example.demo.config.oauth;
 
 import com.example.demo.config.oauth.attr.KakaoAccount;
 import com.example.demo.config.oauth.attr.KakaoAttr;
+import com.example.demo.config.oauth.attr.NaverAttr;
+import com.example.demo.config.oauth.attr.NaverResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +39,16 @@ public class OAuth2UserAttribute {
             String nickname = kakaoAccount.getKakaoProfile().getNickname();
             attributes.put(USER_ID, id);
             attributes.put(USER_NAME, nickname);
+            attributes.put(USER_EMAIL, email);
+        }
+        else if (OAuth2RegistrationType.NAVER.getTypeName().equals(registrationId)) {
+            NaverAttr naverAttr = objectMapper.readValue(response, NaverAttr.class);
+            NaverResponse naverResponse = naverAttr.getResponse();
+
+            String id = naverResponse.getId();
+            String email = naverResponse.getEmail();
+            attributes.put(USER_ID, id);
+            attributes.put(USER_NAME, email);
             attributes.put(USER_EMAIL, email);
         }
 

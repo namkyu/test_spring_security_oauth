@@ -89,6 +89,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .antMatchers("/logout.html").permitAll()
                     .antMatchers("/oauth2Login.html").permitAll()
                     .antMatchers("/denied").permitAll()
+                    .antMatchers("/login/**").permitAll()
                     .antMatchers("/admin/**").hasAnyRole("ADMIN")
                     .antMatchers("/user/**").authenticated()
                     .anyRequest().authenticated()
@@ -100,9 +101,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .oauth2Login() // oauth2 로그인 관련 처리 설정
                     .loginPage("/oauth2Login.html")
-                    .redirectionEndpoint()
-                    .baseUri("/oauth2/callback/*")
-                    .and()
+                        .authorizationEndpoint()
+                            .baseUri("/login/oauth2/authorization")
+                            .and()
+                        .redirectionEndpoint()
+                            .baseUri("/login/oauth2/callback/*")
+                            .and()
                     .userInfoEndpoint().userService(customOAuth2UserService()) // oauth2 인증 과정에서 authentication 생성에 필요한 OAuth2User 를 반환한다.
                     .and()
                     .successHandler(customOAuth2SuccessHandler()) // 인증 성공
