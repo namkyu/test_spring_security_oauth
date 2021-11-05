@@ -37,6 +37,16 @@ spring:
             authorization-grant-type: authorization_code # authorization_code : 발급, refresh_token : 갱신, delete : 삭제
             client-authentication-method: POST
             client-name: naver
+          google:
+            client-id: ${env.google.client-id}
+            client-secret: ${env.google.client-secret}
+            scope:
+              - profile
+              - email
+            redirect-uri: "{baseUrl}/{action}/oauth2/callback/{registrationId}"
+            authorization-grant-type: authorization_code
+            client-authentication-method: POST
+            client-name: google
 
         provider:
           kakao:
